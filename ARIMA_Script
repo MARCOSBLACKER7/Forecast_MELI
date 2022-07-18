@@ -1,0 +1,325 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[16]:
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+get_ipython().run_line_magic('matplotlib', 'inline')
+import warnings
+warnings.filterwarnings('ignore')
+import seaborn as sns
+from pmdarima.arima import auto_arima
+
+
+# In[210]:
+
+
+data = pd.read_csv("sales3.csv")
+
+
+# In[241]:
+
+
+data.head()
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[212]:
+
+
+print(data.dtypes)
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[213]:
+
+
+data['date'] = pd.to_datetime(data['date'])
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[214]:
+
+
+print(data.dtypes)
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[215]:
+
+
+plt.figure(figsize=(12,8))
+sns.lineplot(data = data, x='date', y= 'quantity')
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[216]:
+
+
+data.set_index('date',inplace=True)
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[217]:
+
+
+from pmdarima.arima import ADFTest
+adf_test = ADFTest(alpha = 0.05)
+adf_test.should_diff(data)
+
+
+# In[ ]:
+
+
+
+
+
+# In[243]:
+
+
+train = data[:177]
+test = data[-30:]
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[242]:
+
+
+train.tail()
+
+
+# In[ ]:
+
+
+
+
+
+# In[245]:
+
+
+test.head()
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[219]:
+
+
+plt.figure(figsize=(20,12))
+plt.plot(train)
+plt.plot(test)
+plt.xlabel('Year')
+plt.ylabel('Sales')
+
+
+# In[ ]:
+
+
+
+
+
+# In[235]:
+
+
+arima_model =  auto_arima(train,start_p=0, d=1, start_q=0, 
+                          max_p=5, max_d=5, max_q=5, start_P=0, 
+                          D=1, start_Q=0, max_P=5, max_D=5,
+                          max_Q=5, m=12, seasonal=True, 
+                          error_action='warn',trace = True,
+                          supress_warnings=True,stepwise = True,
+                          random_state=20,n_fits = 50 )
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[236]:
+
+
+arima_model.summary()
+
+
+# In[237]:
+
+
+prediction = pd.DataFrame(arima_model.predict(n_periods = 30),index=test.index)
+prediction.columns = ['predicted_sales']
+prediction
+
+
+# In[239]:
+
+
+plt.figure(figsize=(12,8))
+plt.plot(train,label="Training")
+plt.plot(prediction,label="Predicted")
+plt.legend(loc = 'upper left')
+plt.show()
+
+
+# In[240]:
+
+
+from sklearn.metrics import r2_score
+test['predicted_sales'] = prediction
+r2_score(test['quantity'], test['predicted_sales'])
+
